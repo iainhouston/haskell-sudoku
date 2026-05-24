@@ -1,0 +1,17 @@
+# Haskell build artefacts
+dist/
+dist-newstyle/
+.stack-work/
+*.o
+*.hi
+*.dyn_o
+*.dyn_hi
+
+# Generated executables
+Sudoku
+
+# GHCi history
+.ghci
+
+# Generated puzzle files
+puzzle.txt
