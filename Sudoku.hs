@@ -283,7 +283,7 @@ removeCells n ((r,c):rest) g
         then removeCells (n - 1) rest g'    -- blank accepted
         else removeCells n rest g           -- would break uniqueness, skip
   where
-    current = (g !! r) !! c
+    current = g !! r !! c
 
 -- ---------------------------------------------------------------------------
 -- Uniqueness check — used during puzzle generation
@@ -340,7 +340,7 @@ nextSeed s = (1103515245 * s + 12345) `mod` 2147483648
 
 -- Draw a random integer in [lo, hi] and return the next seed.
 randomR' :: (Int, Int) -> Seed -> (Int, Seed)
-randomR' (lo, hi) seed = (lo + (seed' `mod` (hi - lo + 1)), seed')
+randomR' (lo, hi) seed = (lo + seed' `mod` (hi - lo + 1), seed')
   where seed' = nextSeed seed
 
 -- IO-facing shuffle: obtain a fresh seed and delegate to the pure version.
@@ -452,16 +452,10 @@ solveAndPrint grid =
 -- Each row is split into three 3-cell groups and rendered with vertical
 -- separators so the 3x3 boxes are visually distinct.  A full-width separator
 -- is inserted after every third row to highlight the box boundaries.
--- Blank cells are shown as spaces instead of the `0` sentinel.
 
 pretty :: Grid -> String
 pretty g = unlines $
-  ["+-------+-------+-------+"] ++
-  concatMap rowLine (zip [1..] g)
+  "+-------+-------+-------+" : concatMap rowLine (zip [1..] g)
   where
     rowLine (r, row) =
-      ["| " ++ intercalate " | " (map (unwords . map prettyCell) (group row)) ++ " |"]
-      ++ ["+-------+-------+-------+" | r `mod` 3 == 0]
-
-    prettyCell '0' = " "
-    prettyCell c   = [c]
+      ("| " ++ intercalate " | " (map (unwords . map (:[])) (group row)) ++ " |") : ["+-------+-------+-------+" | r `mod` 3 == 0]
