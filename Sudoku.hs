@@ -452,10 +452,14 @@ solveAndPrint grid =
 -- Each row is split into three 3-cell groups and rendered with vertical
 -- separators so the 3x3 boxes are visually distinct.  A full-width separator
 -- is inserted after every third row to highlight the box boundaries.
+-- Blank cells are shown as spaces instead of the `0` sentinel.
 
 pretty :: Grid -> String
 pretty g = unlines $
   "+-------+-------+-------+" : concatMap rowLine (zip [1..] g)
   where
     rowLine (r, row) =
-      ("| " ++ intercalate " | " (map (unwords . map (:[])) (group row)) ++ " |") : ["+-------+-------+-------+" | r `mod` 3 == 0]
+      ("| " ++ intercalate " | " (map (unwords . map prettyCell) (group row)) ++ " |") : ["+-------+-------+-------+" | r `mod` 3 == 0]
+
+    prettyCell '0' = " "
+    prettyCell c   = [c]
