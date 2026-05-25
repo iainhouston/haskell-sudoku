@@ -16,7 +16,7 @@ module Main where
 -- one at a time — keeping a cell blank only when the puzzle still has a unique
 -- solution.
 
-import Data.List (minimumBy)
+import Data.List (intercalate, minimumBy)
 import Data.Maybe (fromMaybe)
 import Data.Time.Clock.POSIX (getPOSIXTime)
 import System.Environment (getArgs)
@@ -417,12 +417,14 @@ main = do
       puzzle' <- generatePuzzle defaultBlankCount
       writeGridFile path puzzle'
       putStrLn $ "Generated puzzle written to " ++ path
+      putStr (pretty puzzle')
     ["generate", path, countStr] ->
       case readMaybe countStr of
         Just n | n >= 0 && n <= 81 -> do
           puzzle' <- generatePuzzle n
           writeGridFile path puzzle'
           putStrLn $ "Generated puzzle with " ++ show n ++ " blanks written to " ++ path
+          putStr (pretty puzzle')
         _ -> putStrLn "Blank count must be an integer between 0 and 81."
     ["solve", path] -> do
       grid <- readGridFile path
@@ -447,8 +449,10 @@ solveAndPrint grid =
 -- Pretty printing
 -- ---------------------------------------------------------------------------
 -- Render a Grid as a formatted 9x9 board with box dividers.
--- `chunkRow 3` breaks each 9-character row into three groups of three for the
--- column dividers; `unwords` on single-character strings spaces the digits.
+-- Each row is split into three 3-cell groups and rendered with vertical
+-- separators so the 3x3 boxes are visually distinct.  A full-width separator
+-- is inserted after every third row to highlight the box boundaries.
+-- Blank cells are shown as spaces instead of the `0` sentinel.
 
 pretty :: Grid -> String
 pretty g = unlines $
@@ -456,7 +460,8 @@ pretty g = unlines $
   concatMap rowLine (zip [1..] g)
   where
     rowLine (r, row) =
-      ["| " ++ unwords (chunkRow 3 row) ++ " |"]
+      ["| " ++ intercalate " | " (map (unwords . map prettyCell) (group row)) ++ " |"]
       ++ ["+-------+-------+-------+" | r `mod` 3 == 0]
-    chunkRow _ [] = []
-    chunkRow n xs = unwords (map (:[]) (take n xs)) : chunkRow n (drop n xs)
+
+    prettyCell '0' = " "
+    prettyCell c   = [c]
