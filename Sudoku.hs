@@ -155,13 +155,25 @@ nodups (x:xs) = x `notElem` xs && nodups xs
 -- ---------------------------------------------------------------------------
 -- Branching — expand a matrix on the first ambiguous cell
 -- ---------------------------------------------------------------------------
--- `expand` finds the first cell with more than one candidate and produces one
--- new matrix per candidate, with that cell fixed to that digit.
--- Using the *first* ambiguous cell (rather than the most-constrained one) is
--- fine for correctness; `randomSolve` uses `bestCell` instead for efficiency.
+-- Given a matrix with at least one unsettled cell, `expand` returns a list
+-- of matrices — one per candidate of the first ambiguous cell — each
+-- identical to the input except that cell is fixed to a single digit.
 --
--- The list comprehension builds each alternative by splicing the chosen digit c
--- back into the row at the right position.
+-- `break` is applied twice to locate the target:
+--   (rows1, row:rows2) — splits the matrix at the first row containing an
+--                         ambiguous cell; rows1 are all-singleton rows.
+--   (row1, best:row2)  — splits that row at the first ambiguous cell;
+--                         best is its Choices list (length > 1).
+--
+-- The list comprehension rebuilds the full matrix for each digit c in best:
+--   [c]                     wraps c into a singleton Choices
+--   [c] : row2              prepends it to the trailing cells  (parsed as
+--   row1 ++ ([c] : row2)    this because : and ++ share infixr 5 precedence)
+--   [row1 ++ [c] : row2]    wraps the rebuilt row in a list so ++ can splice
+--   rows1 ++ [...] ++ rows2 restores the untouched rows either side
+--
+-- Using the *first* ambiguous cell is fine for correctness; `randomSolve`
+-- uses `bestCell` instead, which picks the most-constrained cell for speed.
 
 expand :: Matrix Choices -> [Matrix Choices]
 expand cm = [rows1 ++ [row1 ++ [c] : row2] ++ rows2 | c <- best]
